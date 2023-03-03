@@ -84,3 +84,5 @@ nb-configuration.xml
 .DS_Store
 
 Hanoi.log
+/src/main/resources/apiKey
+/src/test/resources/apiKey
