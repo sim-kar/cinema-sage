@@ -29,6 +29,7 @@ public class MovieRepository implements Repository {
      * @param name the name of the person
      * @return the person's data as stringified JSON; empty if request was unsuccessful
      */
+    @Override
     public Flowable<String> getPerson(String name) {
         // query value should be URL encoded
         return client.sendRequest(
@@ -41,6 +42,7 @@ public class MovieRepository implements Repository {
      *
      * @return a list of genres as stringified JSON; empty if request was unsuccessful
      */
+    @Override
     public Flowable<String> getGenres() {
         return client.sendRequest("/genre/movie/list");
     }
@@ -52,6 +54,7 @@ public class MovieRepository implements Repository {
      * @param filter the filter to use to find a movie
      * @return the movie's data as stringified JSON; empty if request was unsuccessful
      */
+    @Override
     public Flowable<String> getMovie(String filter) {
         return client.sendRequest("/discover/movie" + filter);
     }
@@ -65,6 +68,7 @@ public class MovieRepository implements Repository {
      * @return the top ranking movie according to the sorting method that the filter applies to as
      *         stringified JSON; empty if request was unsuccessful
      */
+    @Override
     public Flowable<String> getMovie(String filter, String sortBy) {
         // for example '&sort_by=release_date.desc'
         return client.sendRequest("/discover/movie" + filter + sortBy);

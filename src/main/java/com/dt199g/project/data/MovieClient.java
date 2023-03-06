@@ -41,6 +41,7 @@ public class MovieClient implements Client {
      * @return the body of the HTTP response as a single string;
      *         or an empty string if the request is unsuccessful
      */
+    @Override
     public Flowable<String> sendRequest(String query) {
         return client
                 .subscribeOn(Schedulers.io()) // getResponse is blocking
