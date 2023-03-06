@@ -44,7 +44,8 @@ public class MovieRepository implements Repository {
      */
     @Override
     public Flowable<String> getGenres() {
-        return client.sendRequest("/genre/movie/list");
+        // needs '?' since there are no other query parameters
+        return client.sendRequest("/genre/movie/list?");
     }
 
     /**
