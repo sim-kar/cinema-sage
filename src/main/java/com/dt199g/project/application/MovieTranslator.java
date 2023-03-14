@@ -53,11 +53,13 @@ public class MovieTranslator implements Translator {
     }
 
     @Override
-    public void send(String request) {
-        service.findMovie(
-                getGenre(request),
-                getName(request),
-                getYear(request)
+    public Flowable<String> makeRequest(String request) {
+        return translateResponse(
+                service.findMovie(
+                        getGenreFromRequest(request),
+                        getNameFromRequest(request),
+                        getYearFromRequest(request)
+                )
         );
     }
 
