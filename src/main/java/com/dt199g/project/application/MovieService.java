@@ -50,7 +50,7 @@ public class MovieService implements Service {
      */
     Flowable<String> getGenreID(String genre) {
         // since it's a new pattern for each request we have to compile it every time
-        Pattern pattern = Pattern.compile("\\d{2}(?=,\"name\":\"" + genre.toLowerCase() + "\"})");
+        Pattern pattern = Pattern.compile("\\d+(?=,\"name\":\"" + genre.toLowerCase() + "\"})");
 
         return getGenres()
                 .map(String::toLowerCase) // match case; genres are capitalized in JSON
