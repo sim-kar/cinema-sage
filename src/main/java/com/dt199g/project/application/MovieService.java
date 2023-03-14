@@ -2,21 +2,16 @@ package com.dt199g.project.application;
 
 import com.dt199g.project.data.Repository;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.subjects.PublishSubject;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-// gets input from request, sends output to response
-
 /**
- * Services requests to find movies, and provides the results of the requests. To get the results,
- * subscribe to the PublishSubject returned by {@link MovieService#getMovies()}.
+ * Services requests to find movies.
  *
  * @author Simon Karlsson
  */
 public class MovieService implements Service {
     private final Repository repository;
-    private final PublishSubject<String> movies;
 
     /**
      * Initialize a new MovieService.
@@ -25,27 +20,17 @@ public class MovieService implements Service {
      */
     public MovieService(Repository repository) {
         this.repository = repository;
-        this.movies = PublishSubject.create();
     }
 
-
     @Override
-    public PublishSubject<String> getMovies() {
-        return movies;
-    }
-
-
-    @Override
-    public void findMovie(String genre, String name, String year) {
+    public Flowable<String> findMovie(String genre, String name, String year) {
         // use currying to get the filter string; order of parameters matter
-        Flowable.just(makeFilter())
+        return Flowable.just(makeFilter())
                 .zipWith(getGenreID(genre), Function::apply)
                 .zipWith(getPersonID(name), Function::apply)
                 .map(f -> f.apply(year))
                 // getMovie returns a flowable so use flatMap to flatten
-                .flatMap(repository::getMovie)
-                // push the result to subscribers (Response)
-                .subscribe(movies::onNext);
+                .flatMap(repository::getMovie);
     }
 
     /**
