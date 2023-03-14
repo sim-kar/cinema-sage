@@ -1,16 +1,20 @@
 package com.dt199g.project.application;
 
+import io.reactivex.rxjava3.core.Flowable;
+
 /**
- * Used to make translate requests and responses to and from a chatbot.
+ * Used to make translate natural language requests into parameters that can be used to service
+ * the request, and then translates the response back into natural language.
  *
  * @author Simon Karlsson
  */
 public interface Translator {
 
     /**
-     * Sends a request to be serviced.
+     * Sends a natural language request to be serviced, and returns a natural language response.
      *
-     * @param request the request to service
+     * @param request the natural language request to service
+     * @return the response in natural language
      */
-    void send(String request);
+    Flowable<String> makeRequest(String request);
 }
