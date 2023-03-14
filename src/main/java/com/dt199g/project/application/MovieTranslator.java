@@ -1,6 +1,8 @@
 package com.dt199g.project.application;
 
 import io.reactivex.rxjava3.core.Flowable;
+import java.util.List;
+import java.util.Random;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -57,6 +59,54 @@ public class MovieTranslator implements Translator {
                 getName(request),
                 getYear(request)
         );
+    }
+
+    /**
+     * Takes a stringified JSON response containing movie data and translates it to a natural
+     * language response.
+     *
+     * @param response movie data as Stringified JSON
+     * @return a natural language response
+     */
+    private Flowable<String> translateResponse(Flowable<String> response) {
+        return response
+                .map(this::getTitleFromResponse)
+                .map(this::generateResponse);
+    }
+
+    /**
+     * Generate a natural language response with the given title. If the title is empty, it will
+     * return a random response stating that it couldn't find anything; otherwise it will return
+     * a random response with the given title as a recommendation.
+     *
+     * @param title the title of a movie
+     * @return a natural language response recommending the given title;
+     *         or a response that it couldn't find anything if the given title is empty
+     */
+    private String generateResponse(String title) {
+        List<String> notFoundResponses = List.of(
+                "Sorry, I wasn't able to find a movie like that.",
+                "I don't think such a movie exists, I'm afraid.",
+                "I couldn't find anything matching that description. Sorry!",
+                "I wasn't able to find the movie you are looking for."
+        );
+        List<String> foundResponses = List.of(
+                "%s is the movie you're looking for!",
+                "How about %s?",
+                "In that case, I would recommend %s.",
+                "I suggest %s."
+        );
+
+        return title.isEmpty()
+                ? notFoundResponses.stream()
+                    .skip(new Random().nextInt(notFoundResponses.size()))
+                    .findFirst()
+                    .orElse("")
+                : foundResponses.stream()
+                    .skip(new Random().nextInt(notFoundResponses.size()))
+                    .map(response -> String.format(response, title))
+                    .findFirst()
+                    .orElse("");
     }
 
     /**
