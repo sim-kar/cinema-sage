@@ -97,7 +97,8 @@ public class MovieTranslator implements Translator {
     }
 
     /**
-     * Find and return the title from a response.
+     * Find and return the title from a response. Returns the first title if there are several
+     * movies in the response.
      *
      * @param movie the response containing movie data as stringified JSON
      * @return the movie's title
