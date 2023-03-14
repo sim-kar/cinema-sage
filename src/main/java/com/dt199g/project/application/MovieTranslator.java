@@ -4,8 +4,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
- * Takes a user request in string form and parses it for parameters to pass to the supplied service
- * to handle; will then take the response and translate it to natural text.
+ * Takes a user request for a movie in string form and parses it for parameters to pass to the
+ * supplied service to handle; will then take the response and translate it to natural text.
  *
  * @author Simon Karlsson
  */
@@ -33,7 +33,7 @@ public class MovieTranslator implements Translator {
                     + "(?<=\\ba |\\ban |\\bthe )(?!movie|film)[a-z-]+"
                     // or look for something followed by "from", "released", "starring", etc. that
                     // isn't "movie" or "film"
-                    + "|[a-z-]+(?<!movie|film)(?= from| released| starring| featuring| with| that))"
+                    + "|[a-z-]+(?<!movie|film)(?= from| released| starring| featuring| with| that| by))"
             );
 
     /**
@@ -63,7 +63,7 @@ public class MovieTranslator implements Translator {
      * @param request the request to parse a name from
      * @return a name; or an empty string if no name was found
      */
-    String getName(String request) {
+    String getNameFromRequest(String request) {
         return getMatch(request, NAME)
                 // remove trailing "'s", otherwise you get "John Woo's" instead of "John Woo"
                 .replaceAll("'s$", "");
@@ -75,7 +75,7 @@ public class MovieTranslator implements Translator {
      * @param request the request to parse a year from
      * @return a year; or an empty string if no name was found
      */
-    String getYear(String request) {
+    String getYearFromRequest(String request) {
         return getMatch(request, YEAR);
     }
 
@@ -87,20 +87,20 @@ public class MovieTranslator implements Translator {
      * @param request the request to parse a genre from
      * @return a genre; or an empty string if no genre was found
      */
-    String getGenre(String request) {
+    String getGenreFromRequest(String request) {
         return getMatch(request, GENRE);
     }
 
     /**
-     * Looks for the pattern in the request and returns the first match. Returns an empty string
+     * Looks for the pattern in the input and returns the first match. Returns an empty string
      * if no match is found.
      *
-     * @param request the string to parse
+     * @param input the string to parse
      * @param pattern the pattern to look for
      * @return the matching pattern; or an empty string if no match was found
      */
-    private String getMatch(String request, Pattern pattern) {
-        return Stream.of(request)
+    private String getMatch(String input, Pattern pattern) {
+        return Stream.of(input)
                 .map(pattern::matcher)
                 .map(matcher -> (matcher.find()) ? matcher.group() : "")
                 .findFirst()
