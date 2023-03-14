@@ -1,5 +1,6 @@
 package com.dt199g.project.application;
 
+import io.reactivex.rxjava3.core.Flowable;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -35,6 +36,10 @@ public class MovieTranslator implements Translator {
                     // isn't "movie" or "film"
                     + "|[a-z-]+(?<!movie|film)(?= from| released| starring| featuring| with| that| by))"
             );
+
+    // captures the string (word characters and whitespaces) between '"title:"' and '"'
+    private static final Pattern TITLE =
+            Pattern.compile("(?<=\"title\":\")[\\w\\s]+(?=\")");
 
     /**
      * Initialize a new MovieTranslator.
@@ -89,6 +94,16 @@ public class MovieTranslator implements Translator {
      */
     String getGenreFromRequest(String request) {
         return getMatch(request, GENRE);
+    }
+
+    /**
+     * Find and return the title from a response.
+     *
+     * @param movie the response containing movie data as stringified JSON
+     * @return the movie's title
+     */
+    String getTitleFromResponse(String movie) {
+        return getMatch(movie, TITLE);
     }
 
     /**
