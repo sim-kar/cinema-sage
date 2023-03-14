@@ -5,11 +5,11 @@ import java.util.stream.Stream;
 
 /**
  * Takes a user request in string form and parses it for parameters to pass to the supplied service
- * to handle.
+ * to handle; will then take the response and translate it to natural text.
  *
  * @author Simon Karlsson
  */
-public class MovieRequest implements Request {
+public class MovieTranslator implements Translator {
     private final Service service;
 
     // must start with uppercase, but allows for names like Wolcott-Scott, DeBeer, O'Connor
@@ -37,11 +37,11 @@ public class MovieRequest implements Request {
             );
 
     /**
-     * Initialize a new MovieRequest.
+     * Initialize a new MovieTranslator.
      *
      * @param service the service to use
      */
-    public MovieRequest(Service service) {
+    public MovieTranslator(Service service) {
         this.service = service;
     }
 
