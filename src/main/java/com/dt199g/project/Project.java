@@ -48,7 +48,6 @@ public class Project {
         Translator translator = new MovieTranslator(service);
         Chatbot chatbot = new Chatbot(translator);
 
-        chatbot.get()
-                .subscribe(System.out::println);
+        chatbot.start();
     }
 }

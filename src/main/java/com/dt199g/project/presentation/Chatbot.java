@@ -3,6 +3,7 @@ package com.dt199g.project.presentation;
 import com.dt199g.project.application.Translator;
 import io.reactivex.rxjava3.core.Flowable;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A chatbot that gives movie recommendations. Asks for user input in the form of genre, year and/or
@@ -13,7 +14,6 @@ import java.util.Scanner;
  */
 public class Chatbot {
     private final Translator translator;
-    Scanner in = new Scanner(System.in);
 
     /**
      * Initialize a new Chatbot.
@@ -32,29 +32,23 @@ public class Chatbot {
                 Hello! I am a chat bot that can help you find movies to watch.
                 Give me a genre, a year or the name of a member of the cast or crew, and I will do my best to give you a recommendation.
                 I am also contractually obligated to say that "This product uses the TMDB API but is not endorsed or certified by TMDB."
-                
-                How can I help you?"""
-            );
 
-            while (true) {
-                input = in.nextLine();
+                How can I help you?""");
 
-                if (input.equalsIgnoreCase("no")) {
-                    System.out.println("Thanks for chatting!");
-                    break;
-                }
-
-                // need to wait for response or next prompt will be printed before it
-                emitter.onNext(
-                        translator.makeRequest(input)
-                                .blockingFirst()
-                );
-
-                emitter.onNext("Can I help you find anything else?");
-            }
-
-            emitter.onComplete();
-        });
-
+        Flowable.fromCallable(() -> new Scanner(System.in).nextLine())
+                // keep asking for user input; keeps the program alive
+                .repeat()
+                // only accept one request every second to avoid spamming the client
+                .throttleFirst(1000, TimeUnit.MILLISECONDS)
+                .flatMap(translator::makeRequest)
+                .retry(3)
+                .subscribe(response -> {
+                    System.out.println(response);
+                    System.out.println("Can I help you find anything else?");
+                }, error -> {
+                    System.out.println("Whoops, it seems like something has gone wrong.");
+                    System.out.println("Please try again later.");
+                });
+        // }
     }
 }
