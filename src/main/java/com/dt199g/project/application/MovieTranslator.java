@@ -41,7 +41,7 @@ public class MovieTranslator implements Translator {
 
     // captures the string (word characters and whitespaces) between '"title:"' and '"'
     private static final Pattern TITLE =
-            Pattern.compile("(?<=\"title\":\")[\\w\\s]+(?=\")");
+            Pattern.compile("(?<=\"title\":\")[^\"]+(?=\")");
 
     /**
      * Initialize a new MovieTranslator.
