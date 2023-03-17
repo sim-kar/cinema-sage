@@ -1,7 +1,7 @@
 package com.dt199g.project.presentation;
 
 import com.dt199g.project.application.Translator;
-import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Flowable;
 import java.util.Scanner;
 
 /**
@@ -25,16 +25,10 @@ public class Chatbot {
     }
 
     /**
-     * Get a new observable that emits dialogue from the chatbot and takes user input.
-     *
-     * @return the observable
+     * Start the chatbot; lets the user make requests and receive responses.
      */
-    public Observable<String> get() {
-        return Observable.create(emitter -> {
-            String input;
-
-            emitter.onNext(
-                """
+    public void start() {
+        System.out.println("""
                 Hello! I am a chat bot that can help you find movies to watch.
                 Give me a genre, a year or the name of a member of the cast or crew, and I will do my best to give you a recommendation.
                 I am also contractually obligated to say that "This product uses the TMDB API but is not endorsed or certified by TMDB."
