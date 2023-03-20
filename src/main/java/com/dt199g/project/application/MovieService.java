@@ -13,6 +13,10 @@ import java.util.regex.Pattern;
 public class MovieService implements Service {
     private final Repository repository;
 
+    // positive lookahead to only include the "id" before "known_for", since that is a list
+    // of movies that include their own ids which will also match the pattern otherwise
+    private final static Pattern ID = Pattern.compile("(?<=\"id\":)\\d+(?=.+\"known_for\")");
+
     /**
      * Initialize a new MovieService.
      *
@@ -65,13 +69,8 @@ public class MovieService implements Service {
      * @return the person's ID; or an empty string if the person doesn't exist
      */
     Observable<String> getPersonID(String name) {
-        // since it's a new pattern for each request we have to compile it every time
-        // positive lookahead to only include the "id" before "known_for", since that is a list
-        // of movies that include their own ids which will also match the pattern otherwise
-        Pattern pattern = Pattern.compile("(?<=\"id\":)\\d+(?=.+\"known_for\")");
-
         return repository.getPerson(name)
-                .map(pattern::matcher)
+                .map(ID::matcher)
                 .map(matcher -> matcher.find() ? matcher.group() : "");
     }
 
