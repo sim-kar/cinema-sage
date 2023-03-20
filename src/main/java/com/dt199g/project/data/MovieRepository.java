@@ -1,6 +1,6 @@
 package com.dt199g.project.data;
 
-import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Observable;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
@@ -30,7 +30,7 @@ public class MovieRepository implements Repository {
      * @return the person's data as stringified JSON; empty if request was unsuccessful
      */
     @Override
-    public Flowable<String> getPerson(String name) {
+    public Observable<String> getPerson(String name) {
         // query value should be URL encoded
         return client.sendRequest(
                 "/search/person?query=" + URLEncoder.encode(name, StandardCharsets.UTF_8)
@@ -43,7 +43,7 @@ public class MovieRepository implements Repository {
      * @return a list of genres as stringified JSON; empty if request was unsuccessful
      */
     @Override
-    public Flowable<String> getGenres() {
+    public Observable<String> getGenres() {
         // needs '?' since there are no other query parameters
         return client.sendRequest("/genre/movie/list?");
     }
@@ -56,7 +56,7 @@ public class MovieRepository implements Repository {
      * @return the movie's data as stringified JSON; empty if request was unsuccessful
      */
     @Override
-    public Flowable<String> getMovie(String filter) {
+    public Observable<String> getMovie(String filter) {
         return client.sendRequest("/discover/movie" + filter);
     }
 
@@ -70,7 +70,7 @@ public class MovieRepository implements Repository {
      *         stringified JSON; empty if request was unsuccessful
      */
     @Override
-    public Flowable<String> getMovie(String filter, String sortBy) {
+    public Observable<String> getMovie(String filter, String sortBy) {
         // for example '&sort_by=release_date.desc'
         return client.sendRequest("/discover/movie" + filter + sortBy);
     }

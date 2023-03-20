@@ -1,6 +1,6 @@
 package com.dt199g.project.data;
 
-import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * A client for making HTTP requests.
@@ -16,5 +16,5 @@ public interface Client {
      * @param query using the format '/endpoint?paramter=value&anotherparameter=value'
      * @return the body of the HTTP response as a single string
      */
-    Flowable<String> sendRequest(String query);
+    Observable<String> sendRequest(String query);
 }

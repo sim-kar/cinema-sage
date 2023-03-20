@@ -1,7 +1,7 @@
 package com.dt199g.project.application;
 
 import com.dt199g.project.data.Repository;
-import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Observable;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -23,13 +23,13 @@ public class MovieService implements Service {
     }
 
     @Override
-    public Flowable<String> findMovie(String genre, String name, String year) {
+    public Observable<String> findMovie(String genre, String name, String year) {
         // use currying to get the filter string; order of parameters matter
-        return Flowable.just(makeFilter())
+        return Observable.just(makeFilter())
                 .zipWith(getGenreID(genre), Function::apply)
                 .zipWith(getPersonID(name), Function::apply)
                 .map(f -> f.apply(year))
-                // getMovie returns a flowable so use flatMap to flatten
+                // getMovie returns a Observable so use flatMap to flatten
                 .flatMap(repository::getMovie);
     }
 
@@ -38,7 +38,7 @@ public class MovieService implements Service {
      *
      * @return a list of genres as stringified JSON
      */
-    Flowable<String> getGenres() {
+    Observable<String> getGenres() {
         return repository.getGenres();
     }
 
@@ -48,7 +48,7 @@ public class MovieService implements Service {
      * @param genre the genre to get the ID of
      * @return the genre's ID; or an empty string if the genre doesn't exist
      */
-    Flowable<String> getGenreID(String genre) {
+    Observable<String> getGenreID(String genre) {
         // since it's a new pattern for each request we have to compile it every time
         Pattern pattern = Pattern.compile("\\d+(?=,\"name\":\"" + genre.toLowerCase() + "\"})");
 
@@ -64,7 +64,7 @@ public class MovieService implements Service {
      * @param name the name of the person
      * @return the person's ID; or an empty string if the person doesn't exist
      */
-    Flowable<String> getPersonID(String name) {
+    Observable<String> getPersonID(String name) {
         // since it's a new pattern for each request we have to compile it every time
         // positive lookahead to only include the "id" before "known_for", since that is a list
         // of movies that include their own ids which will also match the pattern otherwise

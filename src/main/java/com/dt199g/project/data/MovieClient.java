@@ -1,6 +1,6 @@
 package com.dt199g.project.data;
 
-import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import java.io.IOException;
 import java.net.URI;
@@ -15,7 +15,7 @@ import java.net.http.HttpResponse;
  */
 public class MovieClient implements Client {
     private final String apiUrl;
-    private final Flowable<HttpClient> client;
+    private final Observable<HttpClient> client;
     private final String apiKey;
 
     /**
@@ -27,8 +27,8 @@ public class MovieClient implements Client {
      * @param apiKey the API key as a query parameter
      */
     public MovieClient(HttpClient client, String apiUrl, String apiKey) {
-        // Flowable for backpressure; same client can be used to service many requests; scalable
-        this.client = Flowable.just(client);
+        // same client can be used to service many requests; scalable
+        this.client = Observable.just(client);
         this.apiUrl = apiUrl;
         this.apiKey = apiKey;
     }
@@ -42,7 +42,7 @@ public class MovieClient implements Client {
      *         or an empty string if the request is unsuccessful
      */
     @Override
-    public Flowable<String> sendRequest(String query) {
+    public Observable<String> sendRequest(String query) {
         return client
                 .subscribeOn(Schedulers.io()) // getResponse is blocking
                 .map(client -> getResponse(client, buildRequest(query)))

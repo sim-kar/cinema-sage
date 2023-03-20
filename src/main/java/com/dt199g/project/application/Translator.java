@@ -1,6 +1,6 @@
 package com.dt199g.project.application;
 
-import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Used to make translate natural language requests into parameters that can be used to service
@@ -16,5 +16,5 @@ public interface Translator {
      * @param request the natural language request to service
      * @return the response in natural language
      */
-    Flowable<String> makeRequest(String request);
+    Observable<String> makeRequest(String request);
 }

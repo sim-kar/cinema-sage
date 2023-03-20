@@ -1,6 +1,6 @@
 package com.dt199g.project.application;
 
-import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Observable;
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Pattern;
@@ -65,7 +65,7 @@ public class MovieTranslator implements Translator {
     }
 
     @Override
-    public Flowable<String> makeRequest(String request) {
+    public Observable<String> makeRequest(String request) {
         return translateResponse(
                 service.findMovie(
                         getGenreFromRequest(request),
@@ -82,7 +82,7 @@ public class MovieTranslator implements Translator {
      * @param response movie data as Stringified JSON
      * @return a natural language response
      */
-    private Flowable<String> translateResponse(Flowable<String> response) {
+    private Observable<String> translateResponse(Observable<String> response) {
         return response
                 .map(this::getTitleFromResponse)
                 .map(this::generateResponse);

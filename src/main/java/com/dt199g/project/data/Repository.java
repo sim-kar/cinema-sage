@@ -1,6 +1,6 @@
 package com.dt199g.project.data;
 
-import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Used to get data from a Client.
@@ -14,14 +14,14 @@ public interface Repository {
      * @param name the name of the person
      * @return the person's data
      */
-    Flowable<String> getPerson(String name);
+    Observable<String> getPerson(String name);
 
     /**
      * Get all genres.
      *
      * @return all genres
      */
-    Flowable<String> getGenres();
+    Observable<String> getGenres();
 
     /**
      * Get a movie based on the supplied filter.
@@ -29,7 +29,7 @@ public interface Repository {
      * @param filter the filter to use to find a movie
      * @return a movie that the filter applies to
      */
-    Flowable<String> getMovie(String filter);
+    Observable<String> getMovie(String filter);
 
     /**
      * Get a movie based on the supplied filter and sorting method. For example, if sorted by
@@ -39,5 +39,5 @@ public interface Repository {
      * @param sortBy the criteria to sort movies by
      * @return the top ranking movie according to the sorting method that the filter applies to
      */
-    Flowable<String> getMovie(String filter, String sortBy);
+    Observable<String> getMovie(String filter, String sortBy);
 }

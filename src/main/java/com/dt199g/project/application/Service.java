@@ -1,6 +1,6 @@
 package com.dt199g.project.application;
 
-import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Observable;
 
 /**
  * Used to service requests.
@@ -16,5 +16,5 @@ public interface Service {
      * @param name the name of a person in the movie
      * @param year the year the movie was released
      */
-    Flowable<String> findMovie(String genre, String name, String year);
+    Observable<String> findMovie(String genre, String name, String year);
 }

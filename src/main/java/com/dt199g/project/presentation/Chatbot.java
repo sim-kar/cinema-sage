@@ -1,7 +1,7 @@
 package com.dt199g.project.presentation;
 
 import com.dt199g.project.application.Translator;
-import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Observable;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
@@ -35,7 +35,7 @@ public class Chatbot {
 
                 How can I help you?""");
 
-        Flowable.fromCallable(() -> new Scanner(System.in).nextLine())
+        Observable.fromCallable(() -> new Scanner(System.in).nextLine())
                 // keep asking for user input; keeps the program alive
                 .repeat()
                 // only accept one request every second to avoid spamming the client
