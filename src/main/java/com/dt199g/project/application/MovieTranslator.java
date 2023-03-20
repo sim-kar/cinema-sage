@@ -14,6 +14,18 @@ import java.util.stream.Stream;
  */
 public class MovieTranslator implements Translator {
     private final Service service;
+    private static final List<String> NOT_FOUND_RESPONSES = List.of(
+            "Sorry, I wasn't able to find a movie like that.",
+            "I don't think such a movie exists, I'm afraid.",
+            "I couldn't find anything matching that description. Sorry!",
+            "I wasn't able to find the movie you are looking for."
+    );
+    private static final List<String> FOUND_RESPONSES = List.of(
+            "%s is the movie you're looking for!",
+            "How about %s?",
+            "In that case, I would recommend %s.",
+            "I suggest %s."
+    );
 
     // must start with uppercase, but allows for names like Wolcott-Scott, DeBeer, O'Connor
     // must be at least two names, but can be more like Jean-Claude Van Damme
@@ -86,26 +98,13 @@ public class MovieTranslator implements Translator {
      *         or a response that it couldn't find anything if the given title is empty
      */
     private String generateResponse(String title) {
-        List<String> notFoundResponses = List.of(
-                "Sorry, I wasn't able to find a movie like that.",
-                "I don't think such a movie exists, I'm afraid.",
-                "I couldn't find anything matching that description. Sorry!",
-                "I wasn't able to find the movie you are looking for."
-        );
-        List<String> foundResponses = List.of(
-                "%s is the movie you're looking for!",
-                "How about %s?",
-                "In that case, I would recommend %s.",
-                "I suggest %s."
-        );
-
         return title.isEmpty()
-                ? notFoundResponses.stream()
-                    .skip(new Random().nextInt(notFoundResponses.size()))
+                ? NOT_FOUND_RESPONSES.stream()
+                    .skip(new Random().nextInt(NOT_FOUND_RESPONSES.size()))
                     .findFirst()
                     .orElse("")
-                : foundResponses.stream()
-                    .skip(new Random().nextInt(notFoundResponses.size()))
+                : FOUND_RESPONSES.stream()
+                    .skip(new Random().nextInt(NOT_FOUND_RESPONSES.size()))
                     .map(response -> String.format(response, title))
                     .findFirst()
                     .orElse("");
