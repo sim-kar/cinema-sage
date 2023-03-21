@@ -45,7 +45,7 @@ public class MovieTranslator implements Translator {
                     // expression even longer and more convoluted, so using literal pattern instead
                     + "(science fiction|"
                     // look for something beginning with "a", "an", "the" that isn't "movie" or "film"
-                    + "(?<=\\ba |\\ban |\\bthe )(?!movie|film)[a-z-]+"
+                    + "(?<=\\ba |\\bA |\\ban |\\bAn |\\bthe |\\bThe )(?!movie|film)[a-z-]+"
                     // or look for something followed by "from", "released", "starring", etc. that
                     // isn't "movie" or "film"
                     + "|[a-z-]+(?<!movie|film)(?= from| released| starring| featuring| with| that| by))"
