@@ -47,7 +47,8 @@ public class MovieClient implements Client {
                 .subscribeOn(Schedulers.io()) // getResponse is blocking
                 .map(client -> getResponse(client, buildRequest(query)))
                 .filter(response -> response.statusCode() == 200)
-                .map(HttpResponse::body);
+                .map(HttpResponse::body)
+                .retry(3);
     }
 
     /**
