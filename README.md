@@ -68,15 +68,12 @@ since the Client can handle multiple requests in parallel, meaning one client ca
 users at the same time. The client also uses the `.filter()` operation to filter the responses 
 from unsuccessful requests, and `retry()` to recover from any errors and retry a request three 
 times. Other than immutable fields that are initialized when it is created, the Client is 
-stateless. The private helper functions are pure functions that don't produce any side effects, and 
-always return the same output from given input. The public `sendRequest()` method doesn't produce 
-any side effects, but since it sends an HTTP GET request the output cannot be entirely 
-predictable. For example, the API might be offline for some reason, resulting in a failed request.
-
-Instead of making requests directly from the Client, a repository was implemented, which 
-provides an interface detailing the possible requests to make and abstracting away the need for 
-constructing URL strings. The methods do not produce any side effects, and returns Observables of 
-the responses from the Client.
+stateless. The public `sendRequest()` method doesn't have any side effects, but since it 
+sends an HTTP GET request the output cannot be guaranteed to be identical every time. For 
+example, the API might be offline for some reason, resulting in a failed request.
+Instead of making requests directly from the Client, a repository was implemented, which
+provides an interface of the requests that are possible to make, and abstracts away the need for
+constructing the URL strings for those requests.
 
 Next to be implemented was the application layer, which contains a service and a translator that 
 handle the business logic. The translator takes natural language user requests from the chatbot 
@@ -84,29 +81,23 @@ and parses them for parameters. The service uses these parameters to make reques
 repository. The service also abstracts away some intricacies of making requests from the 
 translator. When using the API to search for movies, it is not possible to use a genre or person 
 directly, but rather their ID must be retrieved from the API first. The service handles this 
-when making requests. To get the genre ID, a regex with positive lookahead is used:
+when making requests. To get the ID number associated with a genre, a regex with positive 
+lookahead is used:
 
 ```java
 public class MovieService implements Service {
     
     // ...
-    
-    Observable<String> getGenreID(String genre) {
-        // since it's a new pattern for each request we have to compile it every time
-        Pattern pattern = Pattern.compile("\\d+(?=,\"name\":\"" + genre.toLowerCase() + "\"})");
 
-        return getGenres()
-                .map(String::toLowerCase) // match case; genres are capitalized in JSON
-                .map(pattern::matcher)
-                .map(matcher -> matcher.find() ? matcher.group() : "");
+    private Observable<String> getGenreID(String genre, Observable<String> genres) {
+      return getMatch(
+              Pattern.compile("\\d+(?=,\"name\":\"" + genre.toLowerCase() + "\"})"),
+              // match case; genres are capitalized in JSON returned by API
+              genres.map(String::toLowerCase)
+      );
     }
 }
 ```
-
-Since the genre itself must be used for the regex, a new pattern must be compiled for each 
-request. This uses an assignment for the pattern, which we would otherwise like to avoid. Other 
-regex here and in the translator were implemented as fields, so that they do not need to be 
-recompiled each time. 
 
 The regex pattern to get the ID of a person uses both positive lookahead and positive lookbehind 
 to only get the ID of the person, and ignore other IDs that are also included in the response 
@@ -116,10 +107,15 @@ from the API.
 public class MovieService implements Service {
     
     // ...
-  
-    // positive lookahead to only include the "id" before "known_for", since that is a list
-    // of movies that include their own ids which will also match the pattern otherwise
-    private final static Pattern ID = Pattern.compile("(?<=\"id\":)\\d+(?=.+\"known_for\")");
+
+    private Observable<String> getPersonID(Observable<String> person) {
+      return getMatch(
+              // positive lookahead to only include the "id" before "known_for", since that is a list
+              // of movies that include their own ids which will also match the pattern otherwise
+              Pattern.compile("(?<=\"id\":)\\d+(?=.+\"known_for\")"),
+              person
+      );
+    }
 }
 ```
 
@@ -166,10 +162,12 @@ public class MovieService implements Service {
 
 A higher-order function that returns `makeFilter` was necessary since referencing `makeFilter` 
 directly in the stream would return a new instance every time, which prevented the currying from 
-being applied. Since `getGenreID()` and `getPersonID` need to make requests to the API, they 
+being applied. Since `getGenreID()` and `getPersonID()` need to make requests to the API, they 
 both return Observables. Therefore, `zipWith()` is used to apply their emissions to the curry 
-function. Similarly, since `Repository#getMovie()` returns an Observable, `flatMap()` was used 
-to flatten the stream.
+function. The year however doesn't need an API call, so it is just a String. A lambda function 
+is used to apply it to the curry function, which returns the final string of query parameters. 
+Lastly, since `Repository#getMovie()` returns an Observable, `flatMap()` was used to flatten the 
+stream.
 
 The translator was implemented next. It uses regex to extract the genre, year and/or person from 
 the user's request, and the title of the movie in the response from the API. The pattern to find 
@@ -187,21 +185,25 @@ reflected in the regex:
 public class MovieTranslator implements Translator {
     
     //...
-  
-    private static final Pattern GENRE =
-            Pattern.compile(
-                    // ignore some common adjectives/adverbs that would match otherwise
-                    "(?!good|popular|most|best|highest)"
-                    // science fiction is the only two-word genre; adding an optional extra word
-                    // group to the expression generates too many false positives and makes the
-                    // expression even longer and more convoluted, so using literal pattern instead
-                    + "(science fiction|"
-                    // look for something beginning with "a", "an", "the" that isn't "movie" or "film"
-                    + "(?<=\\ba |\\bA |\\ban |\\bAn |\\bthe |\\bThe )(?!movie|film)[a-z-]+"
-                    // or look for something followed by "from", "released", "starring", etc. that
-                    // isn't "movie" or "film"
-                    + "|[a-z-]+(?<!movie|film)(?= from| released| starring| featuring| with| that| by))"
-            );
+
+    String getGenreFromRequest(String request) {
+      return getMatch(
+              Pattern.compile(
+                      // ignore some common adjectives/adverbs that would match otherwise
+                      "(?!good|popular|most|best|highest)"
+                      // science fiction is the only two-word genre; adding an optional extra word
+                      // group to the expression generates too many false positives and makes the
+                      // expression even longer and more convoluted, so using literal pattern instead
+                      + "(science fiction|"
+                      // look for something beginning with "a", "an", "the" that isn't "movie" or "film"
+                      + "(?<=\\ba |\\bA |\\ban |\\bAn |\\bthe |\\bThe )(?!movie|film)[a-z-]+"
+                      // or look for something followed by "from", "released", "starring", etc. that
+                      // isn't "movie" or "film"
+                      + "|[a-z-]+(?<!movie|film)(?= from| released| starring| featuring| with| that| by))"
+              ),
+              request
+      );
+    }
 }
 ```
 The grammar and form of genres vary. For example, some act as adjectivally, such as "a horror 
@@ -211,7 +213,9 @@ inadvertently capture adjectives or adverbs as well. Negative lookahead was used
 of these false matches. In addition, the full regex uses grouping, alternation, character 
 classes, positive lookbehind, negative lookbehind, and positive lookahead.
 
-A pure function was implemented to find the matches while avoiding repetition:
+To avoid repetition in the regex methods, a helper method was implemented as a pure function, 
+i.e. it doesn't rely on any outside states or produce any side effects, and it always returns 
+the same output given the same input.
 
 ```java
 public class MovieTranslator implements Translator {
@@ -252,37 +256,34 @@ public class MovieTranslator implements  Translator {
 The `translateResponse()` method first maps the response to the movie's title, and then maps that
 to a generated natural language response containing the title, or - if the request failed to find 
 a movie - a natural language response to that effect. To make the responses seem a bit less 
-artificial, several possible responses were added as fields, and one would be selected randomly.
+artificial, several possible responses were added, and one would be selected randomly. 
+The method has no side effects, but the randomization of responses precludes it from being a 
+pure function.
 
 ```java
 public class MovieTranslator implements  Translator {
 
-    private static final List<String> NOT_FOUND_RESPONSES = List.of(
-            "Sorry, I wasn't able to find a movie like that.",
-            "I don't think such a movie exists, I'm afraid.",
-            "I couldn't find anything matching that description. Sorry!",
-            "I wasn't able to find the movie you are looking for."
-    );
-    private static final List<String> FOUND_RESPONSES = List.of(
-            "%s is the movie you're looking for!",
-            "How about %s?",
-            "In that case, I would recommend %s.",
-            "I suggest %s."
-    );
-    
-    // ...
-  
     private String generateResponse(String title) {
       return title.isEmpty()
-              ? NOT_FOUND_RESPONSES.stream()
-                  .skip(new Random().nextInt(NOT_FOUND_RESPONSES.size()))
-                  .findFirst()
-                  .orElse("")
-              : FOUND_RESPONSES.stream()
-                  .skip(new Random().nextInt(NOT_FOUND_RESPONSES.size()))
-                  .map(response -> String.format(response, title))
-                  .findFirst()
-                  .orElse("");
+              ? Stream.of(List.of(
+                      "Sorry, I wasn't able to find a movie like that.",
+                      "I don't think such a movie exists, I'm afraid.",
+                      "I couldn't find anything matching that description. Sorry!",
+                      "I wasn't able to find the movie you are looking for."
+              ))
+              .map(l -> l.get(new Random().nextInt(l.size())))
+              .findFirst()
+              .orElse("")
+              : Stream.of(List.of(
+                      "%s is the movie you're looking for!",
+                      "How about %s?",
+                      "In that case, I would recommend %s.",
+                      "I suggest %s."
+              ))
+              .map(l -> l.get(new Random().nextInt(l.size())))
+              .map(response -> String.format(response, title))
+              .findFirst()
+              .orElse("");
     }
 }
 ```
@@ -300,12 +301,6 @@ At the root of the project, in Project, all the classes are initialized and depe
 injected.
 
 ## Discussion
-Perspective: Has the purpose been fulfilled? Determine the suitability of the implementation...
-should alternative approaches and procedures be considered?
-Personal reflections: What did you learn? What did you find to be particularly difficult? Did the
-learning module(s) prepare you sufficiently for the challenge? What could be improved in regards to
-the assignment? Etc.
-
 The chatbot successfully responds to user requests with movie recommendations. It will recommend 
 movies based on combinations of genre, year of release, and/or a person, and will respond 
 accordingly if it is unable to find anything that matches the given criteria. The chatbot is 
@@ -316,59 +311,28 @@ is not perfect. The simplest solution would be to keep a list of all possible ge
 against, but I believed this was against the spirit of the assignment.
 
 As stated in the purpose, this project had many supplemental goals to fulfill. How they were 
-included was detailed in the *Procedures*. The project includes regex using alternation, 
+achieved was detailed in the *Procedures*. The project includes regex using alternation, 
 quantifiers, character classes, grouping and several different lookarounds. It includes uses of 
 the Stream API with basic operations such as `map()`, `skip()`, `findFirst()`, `orElse()`. Many 
 basic operations in the Stream API and RxJava work identically. For example, `filter()`, which 
 is used `MovieClient#sendRequest()` to filter unsuccessful requests.
 
 The project as a whole tries to adhere to Functional Programming principles. As demonstrated in 
-*Procedures*, it uses pure functions that are stateless and have no side effects, as well as 
-functional composition, lambda expressions, higher-order functions and currying. States, 
-assignments and imperative code has been avoided as much as possible. Regex that are used 
-repeatedly are stored as fields, to avoid having to recompile them for each request. However, 
-the regex used to get a genre ID from a response from the API is assigned to a variable since it 
-needs to be recompiled every time, and this was the most readable way of doing so, in my opinion.
-Similarly, the lists of responses for the chatbot are assigned to constants. Again, this is to 
-be more readable. It is possible to implement without assignment, as shown below, but I do not 
-see any advantage in doing so; it makes the code more convoluted.
+*Procedures*, it uses functional composition, lambda expressions, higher-order functions and 
+currying. States, assignments and imperative code has been avoided as much as possible. States 
+and assignment are only used in fields for dependencies that are passed as parameters upon class 
+initialization. Methods are implemented as pure functions to as great an extent as possible. The 
+exceptions are when methods need to use a dependency, such as when `MovieService#findMovie()` 
+uses the repository passed as a dependency to get a movie, or when the consistency of the output 
+cannot be guaranteed. This happens when a call is made to the API, since outside factors can 
+influence the response, or in `MovieTranslator#generateResponse()` that uses randomness to 
+generate responses. But many methods, such as `MovieService#getGenreID()`, `MovieService#getMatch
+()`, `MovieTranslator#getNameFromRequest`, and so on, are pure functions.
 
-```java
-public class MovieTranslator implements  Translator {
-  
-    // ...
-  
-    private String generateResponse(String title) {
-      return title.isEmpty()
-              ? Stream.of(
-                      List.of(
-                              "Sorry, I wasn't able to find a movie like that.",
-                              "I don't think such a movie exists, I'm afraid.",
-                              "I couldn't find anything matching that description. Sorry!",
-                              "I wasn't able to find the movie you are looking for."
-                      )
-              )
-                  .map(l -> l.get(new Random().nextInt(l.size())))
-                  .findFirst()
-                  .orElse("")
-              : Stream.of(
-                      List.of(
-                              "%s is the movie you're looking for!",
-                              "How about %s?",
-                              "In that case, I would recommend %s.",
-                              "I suggest %s."
-                      )
-              )
-                  .map(l -> l.get(new Random().nextInt(l.size())))
-                  .findFirst()
-                  .orElse("");
-    }
-}
-```
-
-Other considerations that have been made for readability is to only have one operation per line; 
+Some considerations that have been made for readability is to only have one operation per line; 
 using short, easy to parse lambda functions; and using short, single-purpose methods with 
-descriptive naming.
+descriptive naming. Long and complex regex have also been broken up into smaller sections with 
+explanations, since they can be difficult to parse.
 
 The chatbot includes both basic and advanced RxJava operations, such as `throttleFirst()`, 
 `repeat()`, `retry()`, `subscribeOn()`, `zipWith()` and `flatMap()`. Both `throttleFirst()` and 
@@ -379,11 +343,11 @@ handle requests from many users at once. `throttleFirst()` is used in `Chatbot` 
 the first request from a user every 1000 ms, in an effort to stop users from spamming the client 
 making API requests. That way a single client can service more users at the same time.
 
-Considerations have been made for maintainability. Components are isolated, both in terms of 
-separation of concerns, but also in terms of being independent. Dependency injection is used to 
-make it easier to make changes in one component without affecting another. This also improves 
-testability, since dependencies can be mocked. Observables are also isolated from one another. 
-The client for example can try to recover from a failure without affecting the rest of the 
+Considerations have been made for maintainability as well. Components are isolated, both in 
+terms of separation of concerns, but also in terms of being independent. Dependency injection is 
+used to make it easier to make changes in one component without affecting another. This also 
+improves testability, since dependencies can be mocked. Observables are also isolated from one 
+another. The client for example can try to recover from a failure without affecting the rest of the 
 system with `retry()`, leading to improved reliability.
 
 The `Chatbot` also attempts to recover from errors with `retry()`, but if it is unable to do so, 
@@ -396,5 +360,4 @@ error code of failed API requests could be logged there.
 ---
 
 This product uses the TMDB API but is not endorsed or certified by TMDB.
-
-<img src="./src/main/resources/tmdb_logo.svg" alt="TMDB logo" width="180" height="180"/>
+![TMDB logo](./src/main/resources/tmdb_logo.svg){height=180 width=180}
