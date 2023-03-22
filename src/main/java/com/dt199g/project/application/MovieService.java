@@ -26,48 +26,46 @@ public class MovieService implements Service {
     public Observable<String> findMovie(String genre, String name, String year) {
         // use currying to get the filter string; order of parameters matter
         return Observable.just(makeFilter())
-                .zipWith(getGenreID(genre), Function::apply)
-                .zipWith(getPersonID(name), Function::apply)
+                .zipWith(
+                        getGenreID(genre, repository.getGenres()),
+                        Function::apply
+                )
+                .zipWith(
+                        getPersonID(repository.getPerson(name)),
+                        Function::apply
+                )
                 .map(f -> f.apply(year))
                 // getMovie returns a Observable so use flatMap to flatten
                 .flatMap(repository::getMovie);
     }
 
     /**
-     * Get a list of genres as stringified JSON.
-     *
-     * @return a list of genres as stringified JSON
-     */
-    Observable<String> getGenres() {
-        return repository.getGenres();
-    }
-
-    /**
      * Get the ID of a genre. Returns an empty string if the given genre doesn't exist.
      *
      * @param genre the genre to get the ID of
+     * @param genres an Observable of genres as stringified JSON
      * @return the genre's ID; or an empty string if the genre doesn't exist
      */
-    Observable<String> getGenreID(String genre) {
+    private Observable<String> getGenreID(String genre, Observable<String> genres) {
         return getMatch(
                 Pattern.compile("\\d+(?=,\"name\":\"" + genre.toLowerCase() + "\"})"),
                 // match case; genres are capitalized in JSON returned by API
-                getGenres().map(String::toLowerCase)
+                genres.map(String::toLowerCase)
         );
     }
 
     /**
      * Get the ID of a person. Returns an empty string if the given person doesn't exist.
      *
-     * @param name the name of the person
+     * @param person an Observable of the person's data as strigified JSON
      * @return the person's ID; or an empty string if the person doesn't exist
      */
-    Observable<String> getPersonID(String name) {
+    private Observable<String> getPersonID(Observable<String> person) {
         return getMatch(
                 // positive lookahead to only include the "id" before "known_for", since that is a list
                 // of movies that include their own ids which will also match the pattern otherwise
                 Pattern.compile("(?<=\"id\":)\\d+(?=.+\"known_for\")"),
-                repository.getPerson(name)
+                person
         );
     }
 
