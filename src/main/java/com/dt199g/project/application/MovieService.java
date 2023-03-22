@@ -13,10 +13,6 @@ import java.util.regex.Pattern;
 public class MovieService implements Service {
     private final Repository repository;
 
-    // positive lookahead to only include the "id" before "known_for", since that is a list
-    // of movies that include their own ids which will also match the pattern otherwise
-    private final static Pattern ID = Pattern.compile("(?<=\"id\":)\\d+(?=.+\"known_for\")");
-
     /**
      * Initialize a new MovieService.
      *
@@ -53,13 +49,11 @@ public class MovieService implements Service {
      * @return the genre's ID; or an empty string if the genre doesn't exist
      */
     Observable<String> getGenreID(String genre) {
-        // since it's a new pattern for each request we have to compile it every time
-        Pattern pattern = Pattern.compile("\\d+(?=,\"name\":\"" + genre.toLowerCase() + "\"})");
-
-        return getGenres()
-                .map(String::toLowerCase) // match case; genres are capitalized in JSON
-                .map(pattern::matcher)
-                .map(matcher -> matcher.find() ? matcher.group() : "");
+        return getMatch(
+                Pattern.compile("\\d+(?=,\"name\":\"" + genre.toLowerCase() + "\"})"),
+                // match case; genres are capitalized in JSON returned by API
+                getGenres().map(String::toLowerCase)
+        );
     }
 
     /**
@@ -69,8 +63,25 @@ public class MovieService implements Service {
      * @return the person's ID; or an empty string if the person doesn't exist
      */
     Observable<String> getPersonID(String name) {
-        return repository.getPerson(name)
-                .map(ID::matcher)
+        return getMatch(
+                // positive lookahead to only include the "id" before "known_for", since that is a list
+                // of movies that include their own ids which will also match the pattern otherwise
+                Pattern.compile("(?<=\"id\":)\\d+(?=.+\"known_for\")"),
+                repository.getPerson(name)
+        );
+    }
+
+    /**
+     * Captures the first expression matching the pattern in the input's emissions, and returns
+     * them. If an emission doesn't produce a match, an empty string is returned instead.
+     *
+     * @param pattern the pattern to look for
+     * @param input an Observable of the strings to parse
+     * @return an Observable with the matching patterns; or empty strings if no match was found
+     */
+    private Observable<String> getMatch(Pattern pattern, Observable<String> input) {
+        return Observable.just(pattern)
+                .zipWith(input, Pattern::matcher)
                 .map(matcher -> matcher.find() ? matcher.group() : "");
     }
 
