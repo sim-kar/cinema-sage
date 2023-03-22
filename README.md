@@ -194,9 +194,9 @@ public class MovieTranslator implements Translator {
                       // science fiction is the only two-word genre; adding an optional extra word
                       // group to the expression generates too many false positives and makes the
                       // expression even longer and more convoluted, so using literal pattern instead
-                      + "(science fiction|"
-                      // look for something beginning with "a", "an", "the" that isn't "movie" or "film"
-                      + "(?<=\\ba |\\bA |\\ban |\\bAn |\\bthe |\\bThe )(?!movie|film)[a-z-]+"
+                      + "(science fiction"
+                      // or look for something beginning with "a", "an", "the" that isn't "movie" or "film"
+                      + "|(?<=\\ba |\\bA |\\ban |\\bAn |\\bthe |\\bThe )(?!movie|film)[a-z-]+"
                       // or look for something followed by "from", "released", "starring", etc. that
                       // isn't "movie" or "film"
                       + "|[a-z-]+(?<!movie|film)(?= from| released| starring| featuring| with| that| by))"
