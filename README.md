@@ -253,15 +253,23 @@ public class MovieTranslator implements  Translator {
 }
 ```
 
-The `translateResponse()` method first maps the response to the movie's title, and then maps that
-to a generated natural language response containing the title, or - if the request failed to find 
-a movie - a natural language response to that effect. To make the responses seem a bit less 
-artificial, several possible responses were added, and one would be selected randomly. 
-The method has no side effects, but the randomization of responses precludes it from being a 
-pure function.
+The `translateResponse()` method first uses a method with a regex (described above) to map the 
+response to the movie's title, and then uses `generateResponse()` to map that to a generated 
+natural language response containing the title, or - if the request failed to find a movie - a 
+natural language response to that effect. To make the responses seem a bit less artificial, 
+several possible responses were added, and one would be selected randomly. The method has no 
+side effects, but the randomization of responses precludes it from being a pure function.
 
 ```java
 public class MovieTranslator implements  Translator {
+    
+    // ...
+  
+    private Observable<String> translateResponse(Observable<String> response) {
+      return response
+              .map(this::getTitleFromResponse)
+              .map(this::generateResponse);
+    }
 
     private String generateResponse(String title) {
       return title.isEmpty()
