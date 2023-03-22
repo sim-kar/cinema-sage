@@ -91,9 +91,13 @@ public class MovieTranslator implements Translator {
      */
     String getNameFromRequest(String request) {
         return getMatch(
-                // must start with uppercase, but allows for names like Wolcott-Scott, DeBeer, O'Connor
-                // must be at least two names, but can be more like Jean-Claude Van Damme
-                Pattern.compile("([A-Z][A-Za-z'-]+ [A-Z][A-Za-z'-]+( [A-Z][A-Za-z'-]+)*)"),
+                Pattern.compile(
+                        // must start with uppercase and be at least two names,
+                        // but allows for names like Wolcott-Scott, DeBeer, O'Connor
+                        "([A-Z][A-Za-z'-]+ [A-Z][A-Za-z'-]+"
+                        // optional extra group(s) to allow names longer than two,
+                        // such as Jean-Claude Van Damme
+                        + "( [A-Z][A-Za-z'-]+)*)"),
                 request
         )
                 // remove trailing "'s", otherwise you get "John Woo's" instead of "John Woo"
