@@ -14,46 +14,6 @@ import java.util.stream.Stream;
  */
 public class MovieTranslator implements Translator {
     private final Service service;
-    private static final List<String> NOT_FOUND_RESPONSES = List.of(
-            "Sorry, I wasn't able to find a movie like that.",
-            "I don't think such a movie exists, I'm afraid.",
-            "I couldn't find anything matching that description. Sorry!",
-            "I wasn't able to find the movie you are looking for."
-    );
-    private static final List<String> FOUND_RESPONSES = List.of(
-            "%s is the movie you're looking for!",
-            "How about %s?",
-            "In that case, I would recommend %s.",
-            "I suggest %s."
-    );
-
-    // must start with uppercase, but allows for names like Wolcott-Scott, DeBeer, O'Connor
-    // must be at least two names, but can be more like Jean-Claude Van Damme
-    private static final Pattern NAME =
-            Pattern.compile("([A-Z][A-Za-z'-]+ [A-Z][A-Za-z'-]+( [A-Z][A-Za-z'-]+)*)");
-
-    // must be a year from the 19th or 20th century
-    private static final Pattern YEAR =
-            Pattern.compile("(19|20)\\d{2}");
-
-    private static final Pattern GENRE =
-            Pattern.compile(
-                    // ignore some common adjectives/adverbs that would match otherwise
-                    "(?!good|popular|most|best|highest)"
-                    // science fiction is the only two-word genre; adding an optional extra word
-                    // group to the expression generates too many false positives and makes the
-                    // expression even longer and more convoluted, so using literal pattern instead
-                    + "(science fiction|"
-                    // look for something beginning with "a", "an", "the" that isn't "movie" or "film"
-                    + "(?<=\\ba |\\bA |\\ban |\\bAn |\\bthe |\\bThe )(?!movie|film)[a-z-]+"
-                    // or look for something followed by "from", "released", "starring", etc. that
-                    // isn't "movie" or "film"
-                    + "|[a-z-]+(?<!movie|film)(?= from| released| starring| featuring| with| that| by))"
-            );
-
-    // captures the string (word characters and whitespaces) between '"title:"' and '"'
-    private static final Pattern TITLE =
-            Pattern.compile("(?<=\"title\":\")[^\"]+(?=\")");
 
     /**
      * Initialize a new MovieTranslator.
@@ -99,15 +59,25 @@ public class MovieTranslator implements Translator {
      */
     private String generateResponse(String title) {
         return title.isEmpty()
-                ? NOT_FOUND_RESPONSES.stream()
-                    .skip(new Random().nextInt(NOT_FOUND_RESPONSES.size()))
-                    .findFirst()
-                    .orElse("")
-                : FOUND_RESPONSES.stream()
-                    .skip(new Random().nextInt(NOT_FOUND_RESPONSES.size()))
-                    .map(response -> String.format(response, title))
-                    .findFirst()
-                    .orElse("");
+                ? Stream.of(List.of(
+                                "Sorry, I wasn't able to find a movie like that.",
+                                "I don't think such a movie exists, I'm afraid.",
+                                "I couldn't find anything matching that description. Sorry!",
+                                "I wasn't able to find the movie you are looking for."
+                ))
+                .map(l -> l.get(new Random().nextInt(l.size())))
+                .findFirst()
+                .orElse("")
+                : Stream.of(List.of(
+                                "%s is the movie you're looking for!",
+                                "How about %s?",
+                                "In that case, I would recommend %s.",
+                                "I suggest %s."
+                ))
+                .map(l -> l.get(new Random().nextInt(l.size())))
+                .map(response -> String.format(response, title))
+                .findFirst()
+                .orElse("");
     }
 
     /**
@@ -120,7 +90,12 @@ public class MovieTranslator implements Translator {
      * @return a name; or an empty string if no name was found
      */
     String getNameFromRequest(String request) {
-        return getMatch(request, NAME)
+        return getMatch(
+                // must start with uppercase, but allows for names like Wolcott-Scott, DeBeer, O'Connor
+                // must be at least two names, but can be more like Jean-Claude Van Damme
+                Pattern.compile("([A-Z][A-Za-z'-]+ [A-Z][A-Za-z'-]+( [A-Z][A-Za-z'-]+)*)"),
+                request
+        )
                 // remove trailing "'s", otherwise you get "John Woo's" instead of "John Woo"
                 .replaceAll("'s$", "");
     }
@@ -132,7 +107,11 @@ public class MovieTranslator implements Translator {
      * @return a year; or an empty string if no name was found
      */
     String getYearFromRequest(String request) {
-        return getMatch(request, YEAR);
+        return getMatch(
+                // must be a year from the 19th or 20th century
+                Pattern.compile("(19|20)\\d{2}"),
+                request
+        );
     }
 
     /**
@@ -144,7 +123,22 @@ public class MovieTranslator implements Translator {
      * @return a genre; or an empty string if no genre was found
      */
     String getGenreFromRequest(String request) {
-        return getMatch(request, GENRE);
+        return getMatch(
+                Pattern.compile(
+                        // ignore some common adjectives/adverbs that would match otherwise
+                        "(?!good|popular|most|best|highest)"
+                        // science fiction is the only two-word genre; adding an optional extra word
+                        // group to the expression generates too many false positives and makes the
+                        // expression even longer and more convoluted, so using literal pattern instead
+                        + "(science fiction|"
+                        // look for something beginning with "a", "an", "the" that isn't "movie" or "film"
+                        + "(?<=\\ba |\\bA |\\ban |\\bAn |\\bthe |\\bThe )(?!movie|film)[a-z-]+"
+                        // or look for something followed by "from", "released", "starring", etc. that
+                        // isn't "movie" or "film"
+                        + "|[a-z-]+(?<!movie|film)(?= from| released| starring| featuring| with| that| by))"
+                ),
+                request
+        );
     }
 
     /**
@@ -155,7 +149,11 @@ public class MovieTranslator implements Translator {
      * @return the movie's title
      */
     String getTitleFromResponse(String movie) {
-        return getMatch(movie, TITLE);
+        return getMatch(
+                // captures the string (word characters and whitespaces) between '"title:"' and '"'
+                Pattern.compile("(?<=\"title\":\")[^\"]+(?=\")"),
+                movie
+        );
     }
 
     /**
@@ -166,7 +164,7 @@ public class MovieTranslator implements Translator {
      * @param pattern the pattern to look for
      * @return the matching pattern; or an empty string if no match was found
      */
-    private String getMatch(String input, Pattern pattern) {
+    private String getMatch(Pattern pattern, String input) {
         return Stream.of(input)
                 .map(pattern::matcher)
                 .map(matcher -> (matcher.find()) ? matcher.group() : "")
