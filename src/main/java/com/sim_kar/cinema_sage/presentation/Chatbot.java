@@ -1,6 +1,6 @@
-package com.dt199g.project.presentation;
+package com.sim_kar.cinema_sage.presentation;
 
-import com.dt199g.project.application.Translator;
+import com.sim_kar.cinema_sage.application.Translator;
 import io.reactivex.rxjava3.core.Observable;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;

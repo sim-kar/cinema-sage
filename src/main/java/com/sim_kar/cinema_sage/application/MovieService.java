@@ -1,6 +1,6 @@
-package com.dt199g.project.application;
+package com.sim_kar.cinema_sage.application;
 
-import com.dt199g.project.data.Repository;
+import com.sim_kar.cinema_sage.data.Repository;
 import io.reactivex.rxjava3.core.Observable;
 import java.util.function.Function;
 import java.util.regex.Pattern;

@@ -1,14 +1,14 @@
-package com.dt199g.project;
+package com.sim_kar.cinema_sage;
 
-import com.dt199g.project.application.MovieTranslator;
-import com.dt199g.project.application.MovieService;
-import com.dt199g.project.application.Translator;
-import com.dt199g.project.application.Service;
-import com.dt199g.project.data.Client;
-import com.dt199g.project.data.MovieClient;
-import com.dt199g.project.data.MovieRepository;
-import com.dt199g.project.data.Repository;
-import com.dt199g.project.presentation.Chatbot;
+import com.sim_kar.cinema_sage.application.MovieTranslator;
+import com.sim_kar.cinema_sage.application.MovieService;
+import com.sim_kar.cinema_sage.application.Translator;
+import com.sim_kar.cinema_sage.application.Service;
+import com.sim_kar.cinema_sage.data.Client;
+import com.sim_kar.cinema_sage.data.MovieClient;
+import com.sim_kar.cinema_sage.data.MovieRepository;
+import com.sim_kar.cinema_sage.data.Repository;
+import com.sim_kar.cinema_sage.presentation.Chatbot;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpClient;

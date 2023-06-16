@@ -1,4 +1,4 @@
-package com.dt199g.project.application;
+package com.sim_kar.cinema_sage.application;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
