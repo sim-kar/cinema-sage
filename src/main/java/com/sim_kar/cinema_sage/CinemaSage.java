@@ -22,12 +22,12 @@ import java.net.http.HttpClient;
  *
  * @author Simon Karlsson
  */
-public class Project {
+public class CinemaSage {
     private static final String API_URL = "https://api.themoviedb.org/3";
     private static String apiKey = "";
 
     static {
-        try (InputStream inputStream = Project.class.getResourceAsStream("/apiKey")) {
+        try (InputStream inputStream = CinemaSage.class.getResourceAsStream("/apiKey")) {
             assert inputStream != null;
             apiKey = "&api_key=" + new String(inputStream.readAllBytes());
         } catch (IOException | AssertionError e) {
